@@ -211,39 +211,42 @@ cloud_index = \
     9:'Cb', 
 }
 
-def cloud_label(cloud:str)->int:
-    return cloud_dict[cloud]['label']
+def get_label(dictionary, key:str)->int:
+    return dictionary[key]['label']
 
-def cloud_name(index:int)->str:
-    return cloud_index[index]
+def get_index(dictionary, index:int)->str:
+    return dictionary[index]
 
-def split_cloud(cloud_value:str)->list:
-    if cloud_value == None:
+def split_value(value:str)->list:
+    if value == None:
         return None
-    cloud_list = []
-    while len(cloud_value) >= 2:
-        cloud = cloud_value[-2:]
-        cloud_list.append(cloud)
-        cloud_value = cloud_value[:-2]
-    return cloud_list
+    value_list = []
+    while len(value) >= 2:
+        sub_value = value[-2:]
+        value_list.append(sub_value)
+        value = value[:-2]
+    return value_list
     
-def cloud_converter(cloud_list:list)->list:
-    label_list = np.zeros(10, dtype=int)
-    while len(cloud_list):
-        cloud = cloud_list.pop()
-        label = cloud_label(cloud)
-        label_list[label] = 1
-    return label_list
+def get_one_hot(dictionary:dict, value_list:list, count:int)->list:
+    one_hot = np.zeros(count, dtype=int)
+    while len(value_list):
+        value = value_list.pop()
+        if dictionary != None:
+            label = get_label(dictionary, value)
+        else:
+            label = int(value)-1
+        one_hot[label] = 1
+    return one_hot
 
-def to_decimal(idx_list:list)->int:
-    bin_str = ''.join([str(i) for i in idx_list])
-    return int(bin_str, 2)
+def to_decimal(index_list:list)->int:
+    binary_string = ''.join([str(i) for i in index_list])
+    return int(binary_string, 2)
 
-def function(cloud_value:str, is_decimal:bool=True):
-    if cloud_value == None:
+def converter(value:str, dictionary:dict, count:int, is_decimal:bool):
+    if value == None:
         return None
-    cloud_list = split_cloud(cloud_value)
-    label_list = cloud_converter(cloud_list)
+    value_list = split_value(value)
+    label_list = get_one_hot(dictionary, value_list, count, )
     if is_decimal:
         return to_decimal(label_list)
     return label_list
@@ -263,3 +266,74 @@ flag_dict = \
     }
 
 asos_flag = ['ta', 'rn', 'ws', 'wd', 'hm', 'pa', 'ps', 'ss', 'ts']
+
+phNo_dict = \
+    {
+        '01':{'label':0, '기상현상':'비'},
+        '02':{'label':1, '기상현상':'이슬비'},
+        '03':{'label':2, '기상현상':'착빙성의비'},
+        '04':{'label':3, '기상현상':'소낙비'},
+        '05':{'label':4, '기상현상':'눈'},
+        '06':{'label':5, '기상현상':'진눈깨비'},
+        '07':{'label':6, '기상현상':'착빙성의이슬비'},
+        '08':{'label':7, '기상현상':'소낙눈'},
+        '09':{'label':8, '기상현상':'소낙성진눈깨비'},
+        '10':{'label':9, '기상현상':'싸락눈'},
+        '11':{'label':10, '기상현상':'가루눈'},
+        '12':{'label':11, '기상현상':'어는비'},
+        '13':{'label':12, '기상현상':'싸락우박'},
+        '14':{'label':13, '기상현상':'우박'},
+        '15':{'label':14, '기상현상':'얼음침'},
+        '16':{'label':15, '기상현상':'안개,} 낮은안개'},
+        '17':{'label':16, '기상현상':'땅안개'},
+        '18':{'label':17, '기상현상':'얼음안개'},
+        '19':{'label':18, '기상현상':'박무'},
+        '20':{'label':19, '기상현상':'땅날린눈'},
+        '21':{'label':20, '기상현상':'높은날린눈'},
+        '22':{'label':21, '기상현상':'눈보라'},
+        '23':{'label':22, '기상현상':'이슬'},
+        '24':{'label':23, '기상현상':'언이슬'},
+        '25':{'label':24, '기상현상':'서리'},
+        '26':{'label':25, '기상현상':'서릿발'},
+        '27':{'label':26, '기상현상':'무빙'},
+        '28':{'label':27, '기상현상':'수상'},
+        '29':{'label':28, '기상현상':'수빙'},
+        '30':{'label':29, '기상현상':'조빙'},
+        '31':{'label':30, '기상현상':'우빙'},
+        '32':{'label':31, '기상현상':'결빙'},
+        '33':{'label':32, '기상현상':'용오름'},
+        '34':{'label':33, '기상현상':'해빙'},
+        '35':{'label':34, '기상현상':'유빙'},
+        '36':{'label':35, '기상현상':'해명'},
+        '40':{'label':36, '기상현상':'연무'},
+        '41':{'label':37, '기상현상':'먼지연무'},
+        '42':{'label':38, '기상현상':'황사'},
+        '43':{'label':39, '기상현상':'연기'},
+        '44':{'label':40, '기상현상':'강회'},
+        '45':{'label':41, '기상현상':'땅날린먼지'},
+        '46':{'label':42, '기상현상':'높은날린먼지'},
+        '47':{'label':43, '기상현상':'먼지보라'},
+        '48':{'label':44, '기상현상':'회오리바람'},
+        '50':{'label':45, '기상현상':'햇무리'},
+        '51':{'label':46, '기상현상':'달무리'},
+        '52':{'label':47, '기상현상':'해코로나'},
+        '53':{'label':48, '기상현상':'달코로나'},
+        '54':{'label':49, '기상현상':'채운'},
+        '55':{'label':50, '기상현상':'무지개'},
+        '56':{'label':51, '기상현상':'어광'},
+        '57':{'label':52, '기상현상':'비숍환'},
+        '58':{'label':53, '기상현상':'신기루'},
+        '59':{'label':54, '기상현상':'아지랑이'},
+        '60':{'label':55, '기상현상':'놀'},
+        '70':{'label':56, '기상현상':'뇌전'},
+        '71':{'label':57, '기상현상':'천둥'},
+        '73':{'label':58, '기상현상':'세인트엘모의불'},
+        '74':{'label':59, '기상현상':'극광'},
+        '80':{'label':60, '기상현상':'신적설'},
+        '81':{'label':61, '기상현상':'적설'},
+        '83':{'label':62, '기상현상':'일조<20%'},
+        '84':{'label':63, '기상현상':'일조≥80%'},
+        '86':{'label':64, '기상현상':'부분강수'},
+        '90':{'label':65, '기상현상':'맑음'},
+        '91':{'label':66, '기상현상':'구름조금'}
+        }
