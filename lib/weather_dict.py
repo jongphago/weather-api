@@ -1,3 +1,5 @@
+import numpy as np
+
 call_dict = \
     {
         'serviceKey':{'항목명':'인증키', '항목크기':100, '항목구분':1, '샘플데이터':'인증키', '항목설명':'공공데이터포털에서 발급받은 인증키(URL_Encode)'},
@@ -214,6 +216,37 @@ def cloud_label(cloud:str)->int:
 
 def cloud_name(index:int)->str:
     return cloud_index[index]
+
+def split_cloud(cloud_value:str)->list:
+    if cloud_value == None:
+        return None
+    cloud_list = []
+    while len(cloud_value) >= 2:
+        cloud = cloud_value[-2:]
+        cloud_list.append(cloud)
+        cloud_value = cloud_value[:-2]
+    return cloud_list
+    
+def cloud_converter(cloud_list:list)->list:
+    label_list = np.zeros(10, dtype=int)
+    while len(cloud_list):
+        cloud = cloud_list.pop()
+        label = cloud_label(cloud)
+        label_list[label] = 1
+    return label_list
+
+def to_decimal(idx_list:list)->int:
+    bin_str = ''.join([str(i) for i in idx_list])
+    return int(bin_str, 2)
+
+def function(cloud_value:str, is_decimal:bool=True):
+    if cloud_value == None:
+        return None
+    cloud_list = split_cloud(cloud_value)
+    label_list = cloud_converter(cloud_list)
+    if is_decimal:
+        return to_decimal(label_list)
+    return label_list
 
 def translate(dictionary:dict, column_name:str)->str:
     """
