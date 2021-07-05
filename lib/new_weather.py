@@ -1,11 +1,18 @@
 import datetime as dt
 import os
 import pandas as pd
+import numpy as np
 
 # API
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode, quote_plus
 import xml.etree.ElementTree as ET
+
+# SUN
+from astral import LocationInfo
+import datetime
+from astral.sun import sun
+
 
 def add_hours(_time:dt.datetime, hours:int):
     _time += dt.timedelta(hours=hours)
@@ -131,7 +138,11 @@ def parse(xtree:ET.Element)->list:
         item_list.append(tag_list)
     return item_list
 
-def call(service_key:str, arg_dict:dict)->pd.DataFrame:
+def strptime(string, _format='%Y-%m-%d %H:%M %z'):
+    time = dt.datetime.strptime(string, _format)
+    return time
+
+def call(service_key:str, arg_dict:dict, is_datetime:bool=False)->pd.DataFrame:
     global item_tag
     master_df = pd.DataFrame(columns=item_tag)
 
@@ -175,4 +186,89 @@ def call(service_key:str, arg_dict:dict)->pd.DataFrame:
     # Concatenate dataframe
     sub_df = pd.DataFrame(item_list, columns=item_tag)
     master_df = pd.concat([master_df, sub_df], ignore_index=True)
+
+    # 'tm' 컬럼을 datetime 객체로 형변환
+    if is_datetime:
+        master_df['tm'] = master_df['tm'].apply(strptime)
+
     return master_df
+    
+#################################################
+# weather_dict library에서 넘어온 함수들 입니다.# 
+#################################################
+
+def get_label(dictionary, key:str)->int:
+    return dictionary[key]['label']
+
+def get_index(dictionary, index:int)->str:
+    return dictionary[index]
+
+def split_value(value:str)->list:
+    if value == None:
+        return None
+    value_list = []
+    while len(value) >= 2:
+        sub_value = value[-2:]
+        value_list.append(sub_value)
+        value = value[:-2]
+    return value_list
+    
+def get_one_hot(dictionary:dict, value_list:list, count:int)->list:
+    one_hot = np.zeros(count, dtype=int)
+    while len(value_list):
+        value = value_list.pop()
+        if dictionary != None:
+            label = get_label(dictionary, value)
+        else:
+            label = int(value)-1
+        one_hot[label] = 1
+    return one_hot
+
+def to_decimal(index_list:list)->int:
+    binary_string = ''.join([str(i) for i in index_list])
+    return int(binary_string, 2)
+
+def converter(value:str, dictionary:dict, count:int, is_decimal:bool):
+    if value == None:
+        return None
+    value_list = split_value(value)
+    label_list = get_one_hot(dictionary, value_list, count, )
+    if is_decimal:
+        return to_decimal(label_list)
+    return label_list
+
+def translate(dictionary:dict, column_name:str)->str:
+    """
+    translate(asos_dict, 'ts')
+    >>> '지면온도'
+    """
+    return  dictionary[column_name]['항목명']
+
+
+def get_city(dictionary:dict, site_index:int):
+    city = LocationInfo(region="Korea", 
+                        timezone="Asia/Seoul", 
+                        name=dictionary[site_index]['stnNm'], 
+                        latitude=dictionary[site_index]['위도'], 
+                        longitude=dictionary[site_index]['경도'])
+    return city
+
+def get_suninfo(year:int, month:int, day:int, city):
+    s = sun(city.observer, date=datetime.date(year, month, day), tzinfo=city.timezone)
+    return s["sunrise"], s["sunset"]
+    
+def sun_converter(values, _city):
+    _timestamp, sun_value = values
+    timestamp = strptime(_timestamp + ' +0900')
+    _year = timestamp.year
+    _month = timestamp.month
+    _day = timestamp.day
+
+    sunrise, sunset = get_suninfo(_year, _month, _day, _city)
+
+    if timestamp <= sunrise:
+        return 0.
+    elif timestamp >= sunset:
+        return 0.
+    else:
+        return sun_value

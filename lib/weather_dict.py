@@ -211,53 +211,6 @@ cloud_index = \
     9:'Cb', 
 }
 
-def get_label(dictionary, key:str)->int:
-    return dictionary[key]['label']
-
-def get_index(dictionary, index:int)->str:
-    return dictionary[index]
-
-def split_value(value:str)->list:
-    if value == None:
-        return None
-    value_list = []
-    while len(value) >= 2:
-        sub_value = value[-2:]
-        value_list.append(sub_value)
-        value = value[:-2]
-    return value_list
-    
-def get_one_hot(dictionary:dict, value_list:list, count:int)->list:
-    one_hot = np.zeros(count, dtype=int)
-    while len(value_list):
-        value = value_list.pop()
-        if dictionary != None:
-            label = get_label(dictionary, value)
-        else:
-            label = int(value)-1
-        one_hot[label] = 1
-    return one_hot
-
-def to_decimal(index_list:list)->int:
-    binary_string = ''.join([str(i) for i in index_list])
-    return int(binary_string, 2)
-
-def converter(value:str, dictionary:dict, count:int, is_decimal:bool):
-    if value == None:
-        return None
-    value_list = split_value(value)
-    label_list = get_one_hot(dictionary, value_list, count, )
-    if is_decimal:
-        return to_decimal(label_list)
-    return label_list
-
-def translate(dictionary:dict, column_name:str)->str:
-    """
-    translate(asos_dict, 'ts')
-    >>> '지면온도'
-    """
-    return  dictionary[column_name]['항목명']
-
 flag_dict = \
     {
         "null":"정상",
@@ -337,3 +290,4 @@ phNo_dict = \
         '90':{'label':65, '기상현상':'맑음'},
         '91':{'label':66, '기상현상':'구름조금'}
         }
+
