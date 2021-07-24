@@ -13,6 +13,10 @@ from astral import LocationInfo
 import datetime
 from astral.sun import sun
 
+# GPS distance
+# from math import sin, cos, sqrt, atan2, radians
+import geopy.distance
+
 
 def add_hours(_time:dt.datetime, hours:int):
     _time += dt.timedelta(hours=hours)
@@ -34,8 +38,8 @@ def num_of_rows(_s:str, _e:str)->int:
     _numOfRows = int((e-s).total_seconds() / 3600 + 1)
     return _numOfRows
 
-def make_arg_dict(_stnIds:int, _startDt:str, _endDt:str, _dataCd='ASOS', _dateCd='HR',
-                    _startHh:str='00', _endHh:str='23')->dict:
+def make_arg_dict(_stnIds:int, _startDt:str, _endDt:str, _dataCd='ASOS', 
+                    _dateCd='HR', _startHh:str='00', _endHh:str='23')->dict:
     # day + hour
     s = _startDt + _startHh + '00'
     e = _endDt + _endHh + '00'
@@ -230,9 +234,9 @@ def to_decimal(index_list:list)->int:
 
 def converter(value:str, dictionary:dict, count:int, is_decimal:bool):
     if value == None:
-        return None
+        return np.zeros(count)
     value_list = split_value(value)
-    label_list = get_one_hot(dictionary, value_list, count, )
+    label_list = get_one_hot(dictionary, value_list, count)
     if is_decimal:
         return to_decimal(label_list)
     return label_list
@@ -272,3 +276,42 @@ def sun_converter(values, _city):
         return 0.
     else:
         return sun_value
+
+def lalo(station_dict:dict, index:int):
+    station = station_dict[index]
+    latitude = station['위도']
+    longitude = station['경도']
+    return latitude,longitude
+
+def geo_distance(dictionary, index1, index2):
+    coords_1 = lalo(dictionary, index1)
+    coords_2 = lalo(dictionary, index2)
+    return geopy.distance.vincenty(coords_1, coords_2)
+
+def zero_null(values):
+    if all(values.isna()):
+        return 0.
+    else:
+        rn_value = values[0]
+        return rn_value
+
+def allna(values):
+    if all(values.isna()):
+        return True
+    return False
+
+def sort_fcst(_df:pd.DataFrame, create_datetime=True)->pd.DataFrame:
+    df = _df.sort_values(by=['fcstDate', 'fcstTime', 'category', 'fcstValue'], 
+                             ignore_index=True)
+    if create_datetime:
+        df['fcstDateTime'] = df['fcstDate'] + df['fcstTime']
+    return df
+
+def reshape_sdf(sorted_df:pd.DataFrame)->pd.DataFrame:
+    indice = sorted_df['fcstDateTime'].unique()
+    categories = sorted_df['category'].unique()
+    cat_len = len(categories)
+    sorted_np = sorted_df[['fcstValue']].to_numpy()
+    sorted_np = sorted_np.reshape(-1, cat_len)
+    df = pd.DataFrame(sorted_np, columns=categories, index=indice)
+    return df
